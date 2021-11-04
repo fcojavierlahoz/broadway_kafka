@@ -236,6 +236,31 @@ defmodule BroadwayKafka.BrodClientTest do
               }} = BrodClient.init(opts)
     end
 
+    test ":sasl_gssapi is an optional tuple of SASL_GSSAPI mechanism" do
+      opts = put_in(@opts, [:client_config, :sasl_gssapi], :an_atom)
+
+      assert BrodClient.init(opts) ==
+               {:error,
+                "expected :sasl_gssapi to be a tuple of SASL_GSSAPI mechanism, got: :an_atom"}
+
+      opts = put_in(@opts, [:client_config, :sasl_gssapi], {:callback, :an_atom, {:gssapi, "keytab", "principal"}})
+
+      assert BrodClient.init(opts) ==
+               {:error,
+                "expected :sasl_gssapi to be a tuple of SASL_GSSAPI mechanism, got: {:callback, :an_atom, {:gssapi, \"keytab\", \"principal\"}}"}
+
+      opts = put_in(@opts, [:client_config, :sasl_gssapi], {:callback, :brod_gssapi, {:gssapi, "keytab", "principal"}})
+
+      assert {:ok,
+              %{
+                client_config: [
+                  sasl_gssapi: {:callback, :brod_gssapi, {:gssapi, "keytab", "principal"}}
+                ]
+              }} = BrodClient.init(opts)
+
+    end
+
+
     test ":ssl is an optional boolean or keyword list" do
       opts = put_in(@opts, [:client_config, :ssl], :an_atom)
 

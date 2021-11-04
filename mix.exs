@@ -28,6 +28,7 @@ defmodule BroadwayKafka.MixProject do
     [
       {:broadway, "~> 1.0"},
       {:brod, "~> 3.10"},
+      {:brod_gssapi, github: "ElMaxo/brod_gssapi"},
       {:ex_doc, ">= 0.19.0", only: :docs}
     ]
   end

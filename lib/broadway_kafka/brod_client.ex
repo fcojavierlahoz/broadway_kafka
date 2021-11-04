@@ -24,6 +24,7 @@ defmodule BroadwayKafka.BrodClient do
   @supported_client_config_options [
     :ssl,
     :sasl,
+    :sasl_gssapi,
     :connect_timeout,
     :client_id_prefix
   ]
@@ -249,11 +250,22 @@ defmodule BroadwayKafka.BrodClient do
     with {mechanism, username, password}
          when mechanism in [:plain, :scram_sha_256, :scram_sha_512] and
                 is_binary(username) and
-                is_binary(password) <- value do
-      {:ok, value}
-    else
-      _value -> validation_error(:sasl, "a tuple of SASL mechanism, username and password", value)
-    end
+                is_binary(password) <- value 
+      do
+        {:ok, value}
+      else
+        _value -> validation_error(:sasl, "a tuple of SASL mechanism, username and password", value)   
+     end
+  end
+
+  defp validate_option(:sasl_gssapi, value) do
+     with {_callback, brod_gssapi, _gssapi}
+        when brod_gssapi in [:brod_gssapi] <- value 
+          do
+            {:ok, value}
+         else
+           _value -> validation_error(:sasl_gssapi, "a tuple of SASL_GSSAPI mechanism", value)
+      end
   end
 
   defp validate_option(:ssl, value) when is_boolean(value), do: {:ok, value}
@@ -300,6 +312,7 @@ defmodule BroadwayKafka.BrodClient do
            validate_supported_opts(opts, :client_config, @supported_client_config_options),
          {:ok, _} <- validate(config, :client_id_prefix),
          {:ok, _} <- validate(config, :sasl),
+         {:ok, _} <- validate(config, :sasl_gssapi),
          {:ok, _} <- validate(config, :ssl),
          {:ok, _} <- validate(config, :connect_timeout) do
       {:ok, config}
