@@ -23,7 +23,6 @@ defmodule BroadwayKafka.BrodClient do
 
   @supported_client_config_options [
     :ssl,
-    :sasl_old,
     :sasl,
     :connect_timeout,
     :client_id_prefix
@@ -38,7 +37,7 @@ defmodule BroadwayKafka.BrodClient do
 
   @offset_reset_policy_values [:earliest, :latest]
 
-  @default_offset_reset_policy :latest
+  @default_offset_reset_policy :latest  
 
   @impl true
   def init(opts) do
@@ -243,31 +242,51 @@ defmodule BroadwayKafka.BrodClient do
   defp validate_option(:client_id_prefix, value) when not is_binary(value),
     do: validation_error(:client_id_prefix, "a string", value)
 
-  defp validate_option(:sasl_old, :undefined),
+  defp validate_option(:sasl, :undefined),
     do: {:ok, :undefined}
 
-  defp validate_option(:sasl_old, value) do
+'''
+  defp validate_option_sasl(:sasl, value) do
     with {mechanism, username, password}
-         when mechanism in [:plain, :scram_sha_256, :scram_sha_512] and
+          when mechanism in [:plain, :scram_sha_256, :scram_sha_512] and
                 is_binary(username) and
                 is_binary(password) <- value 
       do
         {:ok, value}
       else
         _value -> validation_error(:sasl, "a tuple of SASL mechanism, username and password", value)   
-     end
-  end
-
-  defp validate_option(:sasl, value) do
-     with {_callback, brod_gssapi, _gssapi}
-        when brod_gssapi in [:brod_gssapi] <- value 
-          do
-            {:ok, value}
-         else
-           _value -> validation_error(:sasl, "a tuple of SASL_GSSAPI mechanism", value)
       end
   end
+  ''' 
 
+  defp validate_option(:sasl, {mechanism, username, password} = value) 
+    when  mechanism not in [:plain, :scram_sha_256, :scram_sha_512, :callback]
+    do
+        validation_error(:sasl, "a SASL mechanism incorrect", value)   
+  end
+
+  defp validate_option(:sasl, {mechanism, username, password} = value) 
+    when  mechanism in [:plain, :scram_sha_256, :scram_sha_512]
+    do
+      if is_binary(username) and
+         is_binary(password) 
+      do
+        {:ok, value}
+      else
+        validation_error(:sasl, "a tuple of SASL mechanism, username and password", value)   
+     end
+  end
+  
+  defp validate_option(:sasl, {:callbak,:brod_gssapi,{:gssapi, keytab, principal} = value}) do
+    if is_binary(keytab) and
+       is_binary(principal) 
+    do
+      {:ok, value}
+    else
+      validation_error(:sasl, "a tuple of SASL_GSSAPI mechanism, keytab and principal", value)   
+   end
+end
+  
   defp validate_option(:ssl, value) when is_boolean(value), do: {:ok, value}
 
   defp validate_option(:ssl, value) do
@@ -311,7 +330,6 @@ defmodule BroadwayKafka.BrodClient do
     with {:ok, [_ | _] = config} <-
            validate_supported_opts(opts, :client_config, @supported_client_config_options),
          {:ok, _} <- validate(config, :client_id_prefix),
-         {:ok, _} <- validate(config, :sasl_old),
          {:ok, _} <- validate(config, :sasl),
          {:ok, _} <- validate(config, :ssl),
          {:ok, _} <- validate(config, :connect_timeout) do
