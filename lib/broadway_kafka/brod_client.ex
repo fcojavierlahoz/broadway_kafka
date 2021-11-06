@@ -259,7 +259,7 @@ defmodule BroadwayKafka.BrodClient do
   end
   ''' 
 
-  defp validate_option(:sasl, {mechanism, username, password} = value) 
+  defp validate_option(:sasl, {mechanism, _username, _password} = value) 
     when  mechanism not in [:plain, :scram_sha_256, :scram_sha_512, :callback]
     do
         validation_error(:sasl, "a SASL mechanism incorrect", value)   
