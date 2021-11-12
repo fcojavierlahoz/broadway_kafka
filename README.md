@@ -20,7 +20,7 @@ end
 
 ## Usage
 
-Configure Broadway's producer using `BroadwayKafka.Producer`:
+Configure Broadway's producer using `BroadwayKafka.Producer` with gssapi:
 
 ```elixir
   defmodule MyBroadway do
@@ -34,6 +34,9 @@ Configure Broadway's producer using `BroadwayKafka.Producer`:
             hosts: [localhost: 9092],
             group_id: "group_1",
             topics: ["test"],
+            client_config: [
+               sasl: {:callback, :brod_gssapi, {:gssapi, "path_to_key_tab", "principal"}},
+             ] 
           ]},
           concurrency: 1
         ],
